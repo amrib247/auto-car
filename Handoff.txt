@@ -1,0 +1,175 @@
+HANDOFF — HBX 18859 RC TRANSMITTER CONTROL & VISION PIPELINE
+Date: 2026-09-24
+
+---
+
+## 1. PROJECT OVERVIEW & ARCHITECTURE
+
+The overall goal is to automate a Haiboxing (HBX) 18859 RC truck from a PC without modifying the truck's internal electronics. The system consists of two primary operational pipelines: a **Vision Subsystem** for object tracking and feedback, and a **Control Subsystem** for sending steering/throttle signals.
+
+### Control Architecture
+
+`PC Python` -> `USB Serial` -> `Adafruit ESP32 Feather V2` -> `I2C` -> `MCP4728 DAC` -> `Stock Transmitter Analog Inputs` -> `Stock 2.4 GHz RF` -> `Unmodified Truck`.
+
+* The stock transmitter remains responsible for RF transmission.
+
+
+
+### Vision Architecture (Current Testing Stack)
+
+`ESP32-S3 CAM (OV2640)` -> `CH340 USB Serial Bridge (115200 Baud)` -> `PC Python (pyserial)` -> `NumPy Buffer Parsing` -> `OpenCV Frame Decoding` -> `Target Tracking`.
+
+---
+
+## 2. HARDWARE & SUBSYSTEM SUMMARY
+
+### RC Vehicle & Transmitter Subsystem
+
+* **Vehicle:** Haiboxing (HBX) 18859.
+
+
+* **Stock Transmitter:** Powered by 2x AA batteries; PCB marking `LS-L103A-2.4GT, 2019-04-19, V5.00`.
+
+
+* **Control Board:** Adafruit ESP32 Feather V2 (3.3V logic).
+
+
+* **DAC:** MCP4728 4-channel, 12-bit I2C DAC.
+
+
+* Pin mapping: `DAC A` -> Steering variable pad, `DAC B` -> Throttle variable pad.
+
+
+* ESP32 I2C pins: `SDA = A22`, `SCL = A20`.
+
+
+
+
+
+### Camera & Vision Subsystem
+
+* **Board Model:** Freenove ESP32-S3 CAM Kit (FNK0085).
+* **Sensor & Memory:** OV2640 camera module with 8MB onboard OPI PSRAM.
+* **USB Interface:** Integrated single-port CH340 USB-to-UART bridge chip.
+* **Arduino IDE Tool Settings:**
+* **Board:** `ESP32S3 Dev Module`
+* **PSRAM:** `OPI PSRAM` *(Required for camera frame buffer allocation)*
+* **USB CDC On Boot:** `Enabled`
+* **Upload Mode:** `UART0 / Hardware CDC`
+
+
+
+---
+
+## 3. CONTROL SUBSYSTEM DETAILS (MCP4728 DAC)
+
+### Measurements & Circuit Topology
+
+* **Slider Signal Range:** Approximately 0 to 3.22 V; variable sides change linearly from 0 to 3.3 V.
+
+
+* **Centers:** Steering center ~1.6 V, Throttle center ~1.7 V.
+
+
+* **Reference Voltage:** Common positive slider reference is ~3.3 V relative to battery GND.
+
+
+* **Signal Destinations:**
+* Steering signal connects to bottom-row pin 4 of the unlabelled 16-pin RF IC.
+
+
+* Throttle signal connects to bottom-row pin 5 of the unlabelled 16-pin RF IC.
+
+
+
+
+
+### Circuit Modification Concept
+
+```
+BEFORE:
+Common ~3.3 V rail ---> [Slider Source] ---> SIGNAL NODE ---> IC Input (Pins 4 / 5)[cite: 1]
+                                              |
+                                       Existing R/C ---> GND[cite: 1]
+
+AFTER:
+Former 3.3 V Slider Pad: OPEN (Disconnected)[cite: 1]
+MCP4728 OUT A/B ----------> SIGNAL NODE ---> IC Input (Pins 4 / 5)[cite: 1]
+                                              |
+                                       Existing R/C ---> GND[cite: 1]
+
+```
+
+> **CRITICAL:** Do NOT connect the DAC output across an intact slider or to the 3.3 V rail. The sliders must be physically removed so the DAC directly drives the variable signal pads.
+> 
+> 
+
+### DAC Wiring & Grounding
+
+* `ESP32 3V3` -> `MCP4728 VDD`
+
+* `ESP32 GND` -> `MCP4728 GND` -> `Transmitter Battery Negative`
+
+* `ESP32 A22 (SDA)` -> `MCP4728 SDA`
+
+* `ESP32 A20 (SCL)` -> `MCP4728 SCL`
+
+* `MCP4728 OUT A` -> Former Steering Signal Pad
+
+
+* `MCP4728 OUT B` -> Former Throttle Signal Pad
+
+
+
+---
+
+## 4. VISION SUBSYSTEM DETAILS (ESP32-S3 WIRED STACK)
+
+### Hardware Limitations & Protocol
+
+Because the Freenove ESP32-S3 board uses an onboard CH340 serial bridge rather than routing to native USB OTG pins, it cannot enumerate as a native UVC webcam. Camera data is formatted into custom binary packets and sent over standard USB Serial.
+
+### Custom Packet Framing Protocol
+
+```
++-------------------+----------------------+-----------------------------+
+| Header (2 Bytes)  | Length Field (4 B)   | Payload Data (N Bytes)      |
++-------------------+----------------------+-----------------------------+
+|    0xAA  0xBB     |  uint32_t (4-byte)   | Compressed JPEG Byte Buffer |
++-------------------+----------------------+-----------------------------+
+
+```
+
+1. **Header Identification (`0xAA 0xBB`):** Receiver sync marker.
+2. **Payload Size:** 4-byte little-endian unsigned integer indicating image frame byte length ($N$).
+3. **Payload:** $N$ raw JPEG bytes, decoded in memory using `cv2.imdecode()`.
+
+### Software Pipeline Notes
+
+* **ESP32 Firmware (`camera_stream.ino`):** Captures frames at `FRAMESIZE_QVGA` (320x240) into PSRAM buffer and flushes binary packets over `Serial.write()` at 115200 baud.
+* **Host Receiver (`camera_viewer.py`):** Uses `pyserial`, `numpy`, and `opencv-python` to decode frames without file I/O operations.
+* **Port Management Rule:** Windows restricts access to COM ports to one handle at a time. The Arduino Serial Monitor must be closed before initiating Python scripts to avoid `PermissionError: Access is denied`.
+
+---
+
+## 5. RECOMMENDED NEXT STEPS
+
+1. **Control Subsystem Bench Test:**
+* Remove transmitter sliders safely without lifting PCB pads.
+
+
+* Bench-test MCP4728 output voltages (0 V, ~1.6 V–1.7 V, 3.3 V) via DMM before connecting to the transmitter PCB.
+
+
+* Verify vehicle behavior with wheels off the ground starting from neutral DAC outputs.
+
+
+
+
+2. **Vision Subsystem Wireless Migration:**
+* Transition the ESP32-S3 CAM firmware from USB serial byte-streaming to a wireless protocol (Wi-Fi HTTP WebServer or low-latency UDP stream) to untether the camera from the laptop.
+
+
+3. **Software & Tracking Integration:**
+* Implement object tracking algorithms (e.g., HSV color thresholding, bounding boxes, centroid coordinates) in the Python host pipeline.
+* Combine tracking output coordinates into closed-loop control commands transmitted via serial to drive the DAC voltages (`set_steering_voltage()`, `set_throttle_voltage()`).
