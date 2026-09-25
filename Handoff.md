@@ -120,18 +120,20 @@ To prevent network video latency and enable real-time object tracking, the host 
 
 ---
 
-## 5. RECOMMENDED NEXT STEPS
+## 5. Remote Car Testing
 
-1. **Control Subsystem Bench Test:**
-* Desolder/remove transmitter sliders safely without lifting PCB pads.
-* Bench-test MCP4728 output voltages (0 V, ~1.6 V–1.7 V, 3.3 V) via DMM before connecting to the transmitter PCB.
-* Verify vehicle behavior with wheels off the ground starting from neutral DAC outputs.
+MCP4728 connected to Feather ESP32 V2, connected to remote control (as per about circuit diagram). Was able to control the car remotely via serial message from computer.
+
+* **ESP32 Script:** `car_reciever.ino` Listens for serial inputs from RC controller class
+* **RC Controller Class:** `rc_controller.py` Manages user input to car, sending commands via serial bus. Normalized and calibrated inputs and outputs
 
 
-2. **Closed-Loop Control Integration:**
+## 6. RECOMMENDED NEXT STEPS
+
+1. **Closed-Loop Control Integration:**
 * Map the YOLO target `center_x` coordinate relative to the frame center (160 px on QVGA) to calculate a steering error signal.
 * Implement proportional or PID control mapping in Python to translate pixel error into MCP4728 DAC steering voltage output commands sent to the Adafruit Feather.
 
 
-3. **Physical Untethered Mount:**
+2. **Physical Untethered Mount:**
 * Mount the ESP32-S3 CAM and a 5V USB power bank securely to the HBX 18859 chassis for mobile outdoor field testing.
