@@ -1,0 +1,33 @@
+wireless_yolo_sensor:
+  ros__parameters:
+    stream_url: "http://192.168.4.1:81/stream"
+    model_path: ""
+    confidence_threshold: 0.5
+    publish_rate_hz: 10.0
+    reconnect_interval_sec: 2.0
+    open_timeout_sec: 3.0
+    read_timeout_sec: 1.0
+    frame_id: "camera"
+    display: true
+
+person_follow_controller:
+  ros__parameters:
+    detection_topic: "/vision/detections"
+    image_width: 320.0
+    minimum_confidence: 0.5
+    proportional_gain: 0.45
+    derivative_gain: 0.015
+    steering_limit: 0.35
+    steering_sign: 1.0
+    throttle_when_person_detected: 0.1
+    target_timeout_sec: 0.5
+    control_rate_hz: 20.0
+    serial_port: "/dev/ttyUSB0"
+    baudrate: 115200
+    enabled: false
+
+wasd_controller:
+  ros__parameters:
+    serial_port: "/dev/ttyACM0"
+    baudrate: 115200
+    control_rate_hz: 20.0
