@@ -7,7 +7,7 @@ Two ROS 2 Humble Python packages for WSL Ubuntu 22.04:
 
 The camera publishes every detected class. Bounding boxes are in source-image pixels; the controller uses the configured 320-pixel image width. Steering error is positive for a target right of center by default. The steering sign, gains, limit, confidence threshold, target timeout, stream URL, model path, and serial port are configurable in `src/auto_car_control/config/person_follow.yaml`.
 
-The camera is mounted upside down. The sensor rotates every frame 180 degrees before preview, inference, and publishing detections, so both image axes are corrected consistently.
+The camera is mounted upside down. The sensor flips every frame vertically, without mirroring it horizontally, before preview, inference, and publishing detections.
 
 Throttle is the requested normalized command: `0.1` when a fresh person detection exists and `0` otherwise. With the current RC calibration, `0` maps to the neutral throttle voltage and `0.1` maps to about 2.266 V. This is not distance control: the car will continue at that throttle while any person remains detected. Use a clear test area and a physical way to stop the car.
 

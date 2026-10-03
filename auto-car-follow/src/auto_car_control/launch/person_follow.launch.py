@@ -21,7 +21,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument("model_path", default_value=""),
             DeclareLaunchArgument("serial_port", default_value="/dev/ttyACM0"),
-            DeclareLaunchArgument("enable_control", default_value="false"),
+            DeclareLaunchArgument("enable_control", default_value="true"),
             Node(
                 package="auto_car_sensors",
                 executable="wireless_yolo_sensor",

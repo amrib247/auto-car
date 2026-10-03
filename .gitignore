@@ -1,0 +1,5 @@
+build/
+log/
+install/
+*yolov8n.pt
+__pycache__/
