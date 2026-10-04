@@ -1,14 +1,25 @@
 wireless_yolo_sensor:
   ros__parameters:
-    stream_url: "http://192.168.4.1:81/stream"
+    stream_url: "http://192.168.0.203:81/stream"
     model_path: ""
+    inference_device: "cuda:0"
     confidence_threshold: 0.5
     publish_rate_hz: 10.0
-    reconnect_interval_sec: 2.0
+    preview_rate_hz: 30.0
+    reconnect_interval_sec: 0.5
     open_timeout_sec: 3.0
-    read_timeout_sec: 1.0
+    read_timeout_sec: 5.0
     frame_id: "camera"
     display: true
+
+imu_udp_sensor:
+  ros__parameters:
+    udp_host: "0.0.0.0"
+    udp_port: 12345
+    publish_rate_hz: 50.0
+    stale_timeout_sec: 1.5
+    display: true
+    frame_id: "imu_local"
 
 person_follow_controller:
   ros__parameters:

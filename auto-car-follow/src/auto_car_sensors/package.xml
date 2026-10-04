@@ -2,7 +2,7 @@
 <package format="3">
   <name>auto_car_sensors</name>
   <version>0.1.0</version>
-  <description>Wireless camera and YOLO object detections for the RC car.</description>
+  <description>Wireless camera, YOLO, and IMU sensing for the RC car.</description>
   <maintainer email="maintainer@example.com">auto-car-follow</maintainer>
   <license>MIT</license>
 
@@ -10,8 +10,10 @@
 
   <depend>rclpy</depend>
   <depend>vision_msgs</depend>
+  <depend>geometry_msgs</depend>
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-matplotlib</exec_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>

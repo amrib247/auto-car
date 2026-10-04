@@ -17,9 +17,13 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "stream_url", default_value="http://192.168.4.1:81/stream"
+                "stream_url", default_value="http://192.168.0.203:81/stream"
             ),
             DeclareLaunchArgument("model_path", default_value=""),
+            DeclareLaunchArgument("inference_device", default_value="cuda:0"),
+            DeclareLaunchArgument("imu_udp_host", default_value="0.0.0.0"),
+            DeclareLaunchArgument("imu_udp_port", default_value="12345"),
+            DeclareLaunchArgument("imu_display", default_value="true"),
             DeclareLaunchArgument("serial_port", default_value="/dev/ttyACM0"),
             DeclareLaunchArgument("enable_control", default_value="true"),
             Node(
@@ -31,6 +35,23 @@ def generate_launch_description():
                     config_path,
                     {"stream_url": LaunchConfiguration("stream_url")},
                     {"model_path": LaunchConfiguration("model_path")},
+                    {"inference_device": LaunchConfiguration("inference_device")},
+                ],
+            ),
+            Node(
+                package="auto_car_sensors",
+                executable="imu_udp_sensor",
+                name="imu_udp_sensor",
+                output="screen",
+                parameters=[
+                    config_path,
+                    {"udp_host": LaunchConfiguration("imu_udp_host")},
+                    {"udp_port": ParameterValue(
+                        LaunchConfiguration("imu_udp_port"), value_type=int
+                    )},
+                    {"display": ParameterValue(
+                        LaunchConfiguration("imu_display"), value_type=bool
+                    )},
                 ],
             ),
             Node(

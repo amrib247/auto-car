@@ -19,11 +19,12 @@ setup(
     zip_safe=True,
     maintainer="auto-car-follow",
     maintainer_email="maintainer@example.com",
-    description="Wireless camera and YOLO object detections for the RC car.",
+    description="Wireless camera, YOLO, and IMU sensing for the RC car.",
     license="MIT",
     entry_points={
         "console_scripts": [
             "wireless_yolo_sensor = auto_car_sensors.sensor_node:main",
+            "imu_udp_sensor = auto_car_sensors.imu_node:main",
         ],
     },
 )
